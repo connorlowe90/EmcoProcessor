@@ -17,4 +17,4 @@ conda activate [ENV-NAME]
 ```
 ### Current Input DXF requirements
 - Needs to be drawn in XY plane with only the radius profile depicted
-![imgageprocessing](https://github.com/connorlowe90/EmcoProcessor/blob/master/Test%20Output%20GUI%20Images/test%20taper%20dxf%20display.PNG)
+![imgageprocessing](https://github.com/connorlowe90/EmcoProcessor/blob/master/Test%20Output%20GUI%20Images/test%20taper%20dxf%20display2.PNG)
