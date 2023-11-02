@@ -23,6 +23,7 @@ dependencies:
   - entrypoints=0.4=py37haa95532_0
   - flit-core=3.6.0=pyhd3eb1b0_0
   - giflib=5.2.1=h8cc25b3_3
+  - git=2.40.1=haa95532_1
   - glib=2.69.1=h5dc1a3c_2
   - icu=58.2=vc14hc45fdbb_0
   - idna=3.4=py37haa95532_0
@@ -180,4 +181,6 @@ dependencies:
   - zipp=3.11.0=py37haa95532_0
   - zlib=1.2.13=h8cc25b3_0
   - zstd=1.5.5=hd43e919_0
+  - pip:
+    - ezdxf==1.0.3
 prefix: C:\Users\condo\anaconda3\envs\EmcoProcessor
