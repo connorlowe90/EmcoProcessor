@@ -1,5 +1,6 @@
 # EmcoProcessor
 Converts DXF files into gcode that runs on a factory Emco 5 CNC lathe
+Intended to use MFI (Mikes Free Interface) to upload files to the machine via RS232
 
 ### Python Environments Setup
 ### 1. Install requirements
