@@ -182,5 +182,8 @@ dependencies:
   - zlib=1.2.13=h8cc25b3_0
   - zstd=1.5.5=hd43e919_0
   - pip:
+    - darkdetect==0.7.1
     - ezdxf==1.0.3
+    - numpy==1.21.6
+    - pyqtdarktheme==2.1.0
 prefix: C:\Users\condo\anaconda3\envs\EmcoProcessor
