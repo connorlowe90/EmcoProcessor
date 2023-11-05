@@ -34,4 +34,4 @@ conda activate [ENV-NAME]
 
 ### Disclaimer
 
-[https://github.com/connorlowe90/EmcoProcessor/blob/master/DISCLAIMER](DISCLAIMER.MD)
+[https://github.com/connorlowe90/EmcoProcessor/blob/master/DISCLAIMER]
