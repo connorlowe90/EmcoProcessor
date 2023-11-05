@@ -31,3 +31,7 @@ conda activate [ENV-NAME]
 
 ### GUI
 ![imgageprocessing](https://github.com/connorlowe90/EmcoProcessor/blob/master/tests/Test%20Output%20GUI%20Images/gui.PNG)
+
+### Disclaimer
+
+[include](File:DISCLAIMER.md)
