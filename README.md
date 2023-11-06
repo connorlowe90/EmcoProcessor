@@ -5,6 +5,7 @@ MFI is also a good verification tool to ensure the code output is what you expec
 This prograam reflects how I hand program my own lathe and would love to hear 
 suggestions on how others are using their machine and would implement things differently.
 
+You can run the file src/dist/EmcoProcessor or set up the python environment below.
 ### Python Environments Setup.
 ### 1. Install requirements.
 - Install [Anaconda](https://docs.anaconda.com/anaconda/install/index.html)
