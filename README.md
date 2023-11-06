@@ -1,4 +1,4 @@
-### There is a current error in the stepdown calculations that is a work in progress.
+# There is a current error in the stepdown calculations that is a work in progress. It occurs when the starting point of your cut is not the lowest point in your DXF profile.
 
 # EmcoProcessor
 Converts DXF files into GCode that runs on a factory Emco 5 CNC lathe.
