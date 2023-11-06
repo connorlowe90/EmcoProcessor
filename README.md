@@ -20,7 +20,8 @@ conda env create --name [ENV-NAME] -f resources/environment.yml
 conda activate [ENV-NAME]
 ```
 ### Current Input DXF requirements.
-- Your DXF just depicts the profile you want to cut and not any facing before or after the part. If you do want to add facing, that can easily be done by inserting the line after generating the GCode. 
+- Your DXF just depicts the profile you want to cut and not any facing before or after the part. If you do want to add facing, that can easily be done by inserting the line after generating the GCode.
+- The DXF profile needs to be connected from start to end.
 - Needs to be drawn in XY plane with only the radius profile depicted in quadrant 2. (Y positive and X negative quadrant of sketch, machine X is sketch Y, machine Z is sketch X)
 - This assumes :
   - Your DXF is starting the cut from X0 (z coordinate on the lathe).
