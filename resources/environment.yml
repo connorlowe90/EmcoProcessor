@@ -182,8 +182,13 @@ dependencies:
   - zlib=1.2.13=h8cc25b3_0
   - zstd=1.5.5=hd43e919_0
   - pip:
+    - altgraph==0.17.4
     - darkdetect==0.7.1
     - ezdxf==1.0.3
     - numpy==1.21.6
+    - pefile==2023.2.7
+    - pyinstaller==5.13.2
+    - pyinstaller-hooks-contrib==2023.10
     - pyqtdarktheme==2.1.0
+    - pywin32-ctypes==0.2.2
 prefix: C:\Users\condo\anaconda3\envs\EmcoProcessor
