@@ -1,9 +1,3 @@
-# Required imports
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QFileDialog, QVBoxLayout, QGraphicsView, QMainWindow, QGraphicsScene, QTextBrowser, QScrollArea, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QCheckBox, QTextEdit, QMessageBox, QGraphicsPathItem
-from PyQt5.QtGui import QPen, QColor, QPainterPath
-from PyQt5.QtCore import Qt, QRectF
-import ezdxf
 import os
 import qdarktheme
 import numpy as np
@@ -266,19 +260,20 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
     
     # Calculate number of steps
     if roughStep != 0:
-#         smallest_z = find_smallest_y(parsed_data)
-        smallest_z = parsed_data[0]['start_point'][1]
+        smallest_z = find_smallest_y(parsed_data)
+#         smallest_z = parsed_data[0]['start_point'][1]
         number_of_steps = int((stockRadius - smallest_z)/roughStep)
         if (stockRadius - smallest_z) % roughStep != 0:
                 number_of_steps += 1
         
     # Generate move and sub calls
     step_num = 1
+    print(smallest_z)
     while step_num != number_of_steps + 1:
         
         # Set x offset accordingly
         if step_num != number_of_steps:
-            startXOffset = ((number_of_steps + 1 - step_num) * roughStep) - smallest_z
+            startXOffset = (stockRadius - smallest_z) - (step_num * roughStep) 
             feed = roughFeed
         else:
             startXOffset = 0
