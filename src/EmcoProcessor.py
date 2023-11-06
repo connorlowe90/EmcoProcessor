@@ -1,3 +1,9 @@
+# Required imports
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QFileDialog, QVBoxLayout, QGraphicsView, QMainWindow, QGraphicsScene, QTextBrowser, QScrollArea, QLineEdit, QLabel, QHBoxLayout, QGridLayout, QCheckBox, QTextEdit, QMessageBox, QGraphicsPathItem
+from PyQt5.QtGui import QPen, QColor, QPainterPath
+from PyQt5.QtCore import Qt, QRectF
+import ezdxf
 import os
 import qdarktheme
 import numpy as np
