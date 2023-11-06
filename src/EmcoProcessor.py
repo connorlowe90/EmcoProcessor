@@ -274,7 +274,6 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
         
     # Generate move and sub calls
     step_num = 1
-    print(smallest_z)
     while step_num != number_of_steps + 1:
         
         # Set x offset accordingly
