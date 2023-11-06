@@ -27,7 +27,8 @@ conda activate [ENV-NAME]
 - This assumes :
   - Your DXF is starting the cut from X0 (z coordinate on the lathe).
   - Any arcs spanning multiple quadrants are split along the centerline of its center point.
-    - This ensures that the output code is usable on the machine because the Emco 5 Lathe can't interpret arc greater than 90 deg.
+    - In fusion, this can easily be done using the sketch break command. 
+    - This ensures that the output code is usable on the machine because the Emco 5 Lathe can't interpret arcs greater than 90 deg.
   - The distance from the Y-axis in the sketch (Y0, which is the machine's X-axis) is the distance to the center of your part.
     - Meaning if your part is revolved around the Y axis in fusion it produces your intended part.
     - In other words, you can't draw the profile anywhere in space, it must be accurately represented with respect to the XY origin.
