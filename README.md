@@ -2,10 +2,10 @@
 Converts DXF files into GCode that runs on a factory Emco 5 CNC lathe.
 Intended to use MFI (Mikes Free Interface) to upload files to the machine via RS232.
 MFI is also a good verification tool to ensure the code output is what you expect.
-This prograam reflects how I hand program my own lathe and would love to hear 
+This program reflects how I hand program my own lathe and would love to hear 
 suggestions on how others are using their machine and would implement things differently.
 
-You can run the file src/dist/EmcoProcessor or set up the python environment below.
+You can run the file src/dist/EmcoProcessor or set up the Python environment below.
 ### Python Environments Setup.
 ### 1. Install requirements.
 - Install [Anaconda](https://docs.anaconda.com/anaconda/install/index.html)
