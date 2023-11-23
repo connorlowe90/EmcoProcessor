@@ -24,7 +24,10 @@ conda activate [ENV-NAME]
 - This assumes :
   - Your DXF just depicts the profile you want to cut and not any facing before or after the part. If you do want to add facing, that can easily be done by inserting the line after generating the GCode.
   - The DXF profile needs to be connected from start to end.
-  - Needs to be drawn in XY plane with only the radius profile depicted in quadrant 2. (Y positive and X negative quadrant of sketch, machine X is sketch Y, machine Z is sketch X)
+  - Needs to be drawn in XY plane with only the radius profile depicted. 
+	Draw in the 2nd or 3rd quadrant (machine X is sketch Y, machine Z is sketch X)
+	- 2nd = Y positive and X negative quadrant of sketch
+	- 3rd = Y negative and X negative quadrant of sketch
   - Your DXF is starting the cut from X0 (z coordinate on the lathe).
   - Any arcs spanning multiple quadrants are split along the centerline of its center point.
     - In fusion, this can easily be done using the sketch break command. 

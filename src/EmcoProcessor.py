@@ -161,6 +161,40 @@ def sortParsedData(parsed_data):
         
     return sorted_lines
 
+# FLips a DXF file over the x azis (machine z) so that you can draw in the 
+#   positive or negative y axis
+def flipDXFOverX(parsed_data):
+    if parsed_data[0]['start_point'][1] < 0 :
+        for item in parsed_data:
+            # flip start point y
+            if 'start_point' in item:
+                item['start_point'] = (item['start_point'][0], abs(item['start_point'][1]))
+
+            # flip end point y 
+            if 'end_point' in item:
+                item['end_point'] = (item['end_point'][0], abs(item['end_point'][1]))
+
+            # flip center point if arc
+            if 'center_point' in item:
+                item['center_point'] = (item['center_point'][0],abs(item['center_point'][1]))
+                
+#             # change start angle if arc
+#             if 'start_angle' in item:
+#                 # do nothing?
+                
+#             # change end angle if arc
+#             if 'end_angle' in item:
+#                 # do nothing?
+                
+            # change direction if arc
+            if 'direction' in item:
+                if item['direction'] == "cw":
+                    item['direction'] = "ccw"
+                else:
+                    item['direction'] = "cw"
+                    
+    return parsed_data
+
 # Adds final blocks to gcode. Included M30, M5
 def addFinishingBlocks(gcode, blockNum, isUseM3M5Checked):
     # ending blocks
@@ -336,6 +370,7 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
 
     # Calculate stepovers
     parsed_data = sortParsedData(parsed_data)
+    parsed_data = flipDXFOverX(parsed_data)
     number_of_steps = 1
     finish_steps = 0
     
@@ -764,6 +799,14 @@ class DXFParserGUI(QWidget):
         drawing_height = max_y - min_y
         scale_factor = 750 / max(drawing_width, drawing_height)  # Adjust the scale as needed
 
+        # draw line for x axis
+        line = self.scene.addLine(0, 0, -750, 0)
+        pen = QPen(QColor(255, 0, 0))
+        pen.setStyle(Qt.DashLine)  # Set the style to DashLine
+        pen.setDashPattern([25, 20])  # Adjust the spacing here
+        line.setPen(pen)
+        
+        # draw DXF entities
         for entity in entities:
             if entity['type'] == 'LINE':
                 start_x, start_y = entity['start_point']
