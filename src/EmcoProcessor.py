@@ -234,90 +234,24 @@ def addRetract(gcode, blockNum, current_x, current_y):
     blockNum += 1
     return gcode, blockNum
 
+# Adds the block num to roughing subroutine calls
 def addSubStartBlock(gcode, sub_start_num):
     modified_gcode_lines = []
     for line in gcode:
-        if "25+blocknum" in line:
+        if "25+blockNumRough" in line:
             # Replace "G25" with "G25 BlockNum"
-            modified_line = line.replace("25+blocknum", f"25             L{sub_start_num:03}")
+            modified_line = line.replace("25+blockNumRough", f"25             L{sub_start_num:03}")
             modified_gcode_lines.append(modified_line)
         else:
             modified_gcode_lines.append(line)
     return modified_gcode_lines
 
-
-        
-# Parses DXF data into Emco supported GCode
-def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecked,isStartRetractZChecked, isStartRetractXZChecked, stockRadius, roughFeed, roughStep):
-    
-    # starting blocks
-    gcode = []
-    blockNum = 0
-    gcode.append(f'%\n')
-    gcode.append(f'    N` G`   X `    Z `  F`  H\n')
-    feed = roughFeed
-    
-    # generate starting blocks
-    gcode, blockNum = addStartingBlocks(gcode, blockNum, isUseM3M5Checked, isStartRetractXChecked, isStartRetractZChecked, isStartRetractXZChecked)
-
-    # Calculate stepovers
-    parsed_data = sortParsedData(parsed_data)
-    number_of_steps = 1;
-    
-    # Calculate number of steps
-    if roughStep != 0:
-        smallest_z = find_smallest_y(parsed_data)
-#         smallest_z = parsed_data[0]['start_point'][1]
-        number_of_steps = int((stockRadius - smallest_z)/roughStep)
-        if (stockRadius - smallest_z) % roughStep != 0:
-                number_of_steps += 1
-        
-    # Generate move and sub calls
-    step_num = 1
-    while step_num != number_of_steps + 1:
-        
-        # Set x offset accordingly
-        if step_num != number_of_steps:
-            startXOffset = (stockRadius - smallest_z) - (step_num * roughStep) 
-            feed = roughFeed
-        else:
-            startXOffset = 0
-            
-        # Calculate starting cut position and move there from X offset
-        # Move to cut
-        firstEndPoint = (parsed_data[0]['start_point'][0], parsed_data[0]['start_point'][1])
-        toAppend = (f'{blockNumPad(blockNum, 1)}{formatG00G01G02G03(compX(firstEndPoint[1], stockRadius) + startXOffset, firstEndPoint[0], "G01")}{formatFeed(feed)}\n')
-        gcode.append(toAppend)
-        blockNum += 1
-        
-        # Add subroutine call
-        gcode.append(f'{blockNumPad(blockNum, 1)}25+blocknum\n')
-        blockNum += 1
-        
-        # Add retract
-        retract_x = compX(parsed_data[-1]['end_point'][1], stockRadius) + startXOffset
-        retract_y = parsed_data[-1]['end_point'][0]
-        gcode, blockNum = addRetract(gcode, blockNum, retract_x, retract_y)
-            
-        # Update num steps
-        step_num += 1
-        
-    # generate finishing blocks
-    gcode, blockNum = addFinishingBlocks(gcode, blockNum, isUseM3M5Checked)
-    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
-    blockNum += 1
-    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
-    blockNum += 1
-    
-    # insert sub block number into sub calls
-    gcode = addSubStartBlock(gcode, blockNum)
-    
-    # Calculate starting positions of cut relatively 
-    firstEndPoint = (parsed_data[0]['start_point'][0], parsed_data[0]['start_point'][1])
-    current_x = compX(firstEndPoint[1], stockRadius)
-    current_y = firstEndPoint[0]
-    
+# Creates toolpath gcode calls
+def createToolpath(gcode, parsed_data, blockNum, current_x, current_y, stockRadius, roughFeed, finishFeed, isRoughing):
     # generate subroutine gcode blocks
+    if isRoughing == 0:
+        roughFeed = finishFeed
+        
     for entity in parsed_data:
         toAppend = ""
         isArc = 0
@@ -335,7 +269,7 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
             end_angle = entity['end_angle']
             start_x, start_y = entity['start_point']
             direction = entity['direction']
-            
+
             if direction == "ccw":
                 # First line with M03: Include end point relative to the center
                 end_x, end_y = entity['end_point']
@@ -352,7 +286,7 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
                 gotoY = end_x - current_y
                 current_y = end_x
                 gcodeToAdd = (f'{formatG00G01G02G03(gotoX, gotoY, "G03")}{formatFeed(roughFeed)}\n')
-                
+
             # Calculate the relative distance to the center
             relative_x = end_x - center_x
             relative_y = end_y - center_y
@@ -370,8 +304,7 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
                 gotoY = end_x - current_y
                 current_y = end_x
                 gcodeToAdd = (f'{formatG00G01G02G03(gotoX, gotoY, "G01")}{formatFeed(roughFeed)}')
-            
-        
+
         # append to output
         toAppend = blockNumPad(blockNum, 1) + gcodeToAdd + "\n"
         gcode.append(toAppend)
@@ -381,7 +314,120 @@ def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecke
             blockNum += 1
             
     # Insert final M17 sub return
-    gcode.append(f'{blockNumPad(blockNum, 0)}M17\n')
+    if isRoughing:
+        gcode.append(f'{blockNumPad(blockNum, 0)}M17\n')
+        
+    return gcode, blockNum
+        
+# Parses DXF data into Emco supported GCode
+def generate_gcode_from_dxf(parsed_data, isUseM3M5Checked, isStartRetractXChecked,isStartRetractZChecked, isStartRetractXZChecked, stockRadius, roughFeed, roughStep, finishFeed, finishStep):
+    
+    # starting blocks
+    gcode = []
+    blockNum = 0
+    gcode.append(f'%\n')
+    gcode.append(f'    N` G`   X `    Z `  F`  H\n')
+    feed = roughFeed
+    if (finishFeed == ""):
+        finishFeed == roughFeed
+    
+    # generate starting blocks
+    gcode, blockNum = addStartingBlocks(gcode, blockNum, isUseM3M5Checked, isStartRetractXChecked, isStartRetractZChecked, isStartRetractXZChecked)
+
+    # Calculate stepovers
+    parsed_data = sortParsedData(parsed_data)
+    number_of_steps = 1
+    finish_steps = 0
+    
+    # Calculate number of steps
+    if roughStep != 0:
+        smallest_z = find_smallest_y(parsed_data)
+        number_of_steps = int((stockRadius - smallest_z)/roughStep)
+        if finishStep != 0:
+            if ((stockRadius - smallest_z) % roughStep) / finishStep > 1:
+                number_of_steps += 1
+        
+    # Generate move and sub calls
+    step_num = 1
+    while step_num - 1 != number_of_steps:
+        
+        # Set x offset accordingly
+        # Roughing
+        feed = roughFeed
+        startXOffset = 0
+        if roughStep != 0:
+            if (stockRadius-smallest_z)-((step_num-1)*roughStep) > roughStep:
+                startXOffset = (stockRadius - smallest_z) - (step_num * roughStep) 
+            else:
+                # Finishing
+                stockLeft = (stockRadius-smallest_z)-((step_num-1)*roughStep)
+                if stockLeft > finishStep:
+                    startXOffset = stockLeft - (stockLeft - finishStep)
+        
+        # Calculate starting cut position and move there from X offset
+        # Move to cut
+        firstEndPoint = (parsed_data[0]['start_point'][0], parsed_data[0]['start_point'][1])
+        toAppend = (f'{blockNumPad(blockNum, 1)}{formatG00G01G02G03(compX(firstEndPoint[1], stockRadius) + startXOffset, firstEndPoint[0], "G01")}{formatFeed(feed)}\n')
+        gcode.append(toAppend)
+        blockNum += 1
+        
+        # Add subroutine call
+        gcode.append(f'{blockNumPad(blockNum, 1)}25+blockNumRough\n')
+        blockNum += 1
+        
+        # Add retract
+        retract_x = compX(parsed_data[-1]['end_point'][1], stockRadius) + startXOffset
+        retract_y = parsed_data[-1]['end_point'][0]
+        gcode, blockNum = addRetract(gcode, blockNum, retract_x, retract_y)
+            
+        # Update num steps
+        step_num += 1
+        
+    # Blank lines for readability
+    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
+    blockNum += 1
+    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
+    blockNum += 1
+    
+    # Calculate starting positions of cut relatively 
+    firstEndPoint = (parsed_data[0]['start_point'][0], parsed_data[0]['start_point'][1])
+    current_x = compX(firstEndPoint[1], stockRadius)
+    current_y = firstEndPoint[0]
+    
+    ##############
+    # add finish subroutine
+    ##############
+    if roughStep != 0:
+        # Move to cut
+        firstEndPoint = (parsed_data[0]['start_point'][0], parsed_data[0]['start_point'][1])
+        toAppend = (f'{blockNumPad(blockNum, 1)}{formatG00G01G02G03(compX(firstEndPoint[1], stockRadius), firstEndPoint[0], "G01")}{formatFeed(finishFeed)}\n')
+        gcode.append(toAppend)
+        blockNum += 1
+
+        # Add finish pass
+        gcode, blockNum = createToolpath(gcode, parsed_data, blockNum, current_x, current_y, stockRadius, roughFeed, finishFeed, 0)
+
+        # Add retract
+        retract_x = compX(parsed_data[-1]['end_point'][1], stockRadius)
+        retract_y = parsed_data[-1]['end_point'][0]
+        gcode, blockNum = addRetract(gcode, blockNum, retract_x, retract_y)
+    
+    ##############
+    # end finish subroutine
+    ##############
+    
+    # generate finishing blocks
+    gcode, blockNum = addFinishingBlocks(gcode, blockNum, isUseM3M5Checked)
+    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
+    blockNum += 1
+    gcode.append(f'{blockNumPad(blockNum, 1)}21\n')
+    blockNum += 1
+    
+    # insert sub block number into sub calls
+    gcode = addSubStartBlock(gcode, blockNum)
+    
+    # generate subroutine gcode blocks
+    gcode, blockNum = createToolpath(gcode, parsed_data, blockNum, current_x, current_y, stockRadius, roughFeed, finishFeed, 1)
 
     # MFI end input
     gcode.append(f'   M\n')
@@ -454,36 +500,40 @@ class DXFParserGUI(QWidget):
 
         # Create a grid layout for labels and text boxes
         grid_layout = QGridLayout()
+        
+        # Add a note for stepdowns
+        self.stepdown_desc_label = QLabel("A roughing stepdown of 0 will cut the part in one go. A finishing stepdown of 0 will cut whatever is left after roughing in one go.")
+        grid_layout.addWidget(self.stepdown_desc_label, 0, 1, 1, 10)
 
         # Stock Radius input
         self.stock_radius_label = QLabel("Stock Radius (mm):")
         self.stock_radius_input = QLineEdit()
-        grid_layout.addWidget(self.stock_radius_label, 0, 0)
-        grid_layout.addWidget(self.stock_radius_input, 0, 1)
+        grid_layout.addWidget(self.stock_radius_label, 1, 0)
+        grid_layout.addWidget(self.stock_radius_input, 1, 1)
 
         # Roughing Feedrate input
-        self.roughing_feedrate_label = QLabel("Feedrate (mm/min):")
+        self.roughing_feedrate_label = QLabel("Rough Feedrate (mm/min):")
         self.roughing_feedrate_input = QLineEdit()
-        grid_layout.addWidget(self.roughing_feedrate_label, 0, 3)
-        grid_layout.addWidget(self.roughing_feedrate_input, 0, 4)
+        grid_layout.addWidget(self.roughing_feedrate_label, 1, 3)
+        grid_layout.addWidget(self.roughing_feedrate_input, 1, 4)
 
         # Roughing Stepdown input
-        self.roughing_stepdown_label = QLabel("Stepdown (mm):")
+        self.roughing_stepdown_label = QLabel("Rough Stepdown (mm):")
         self.roughing_stepdown_input = QLineEdit()
-        grid_layout.addWidget(self.roughing_stepdown_label, 0, 5)
-        grid_layout.addWidget(self.roughing_stepdown_input, 0, 6)
+        grid_layout.addWidget(self.roughing_stepdown_label, 1, 5)
+        grid_layout.addWidget(self.roughing_stepdown_input, 1, 6)
 
-#         # Finishing Feedrate input
-#         self.finishing_feedrate_label = QLabel("Finishing Feedrate (mm/min):")
-#         self.finishing_feedrate_input = QLineEdit()
-#         grid_layout.addWidget(self.finishing_feedrate_label, 0, 7)
-#         grid_layout.addWidget(self.finishing_feedrate_input, 0, 8)
+        # Finishing Feedrate input
+        self.finishing_feedrate_label = QLabel("Finish Feedrate (mm/min):")
+        self.finishing_feedrate_input = QLineEdit()
+        grid_layout.addWidget(self.finishing_feedrate_label, 1, 7)
+        grid_layout.addWidget(self.finishing_feedrate_input, 1, 8)
 
-#         # Finishing Stepdown input
-#         self.finishing_stepdown_label = QLabel("Finishing Stepdown (mm):")
-#         self.finishing_stepdown_input = QLineEdit()
-#         grid_layout.addWidget(self.finishing_stepdown_label, 0, 9)
-#         grid_layout.addWidget(self.finishing_stepdown_input, 0, 10)
+        # Finishing Stepdown input
+        self.finishing_stepdown_label = QLabel("Finish Stepdown (mm):")
+        self.finishing_stepdown_input = QLineEdit()
+        grid_layout.addWidget(self.finishing_stepdown_label, 1, 9)
+        grid_layout.addWidget(self.finishing_stepdown_input, 1, 10)
         
         # add layout 1
         layout.addLayout(grid_layout)
@@ -588,17 +638,24 @@ class DXFParserGUI(QWidget):
         else:
             return "" 
     
-#     # Function to read roughing feedrate
-#     def getFinishFeed(self):
-#         if self.finishing_feedrate_input.text() != "":
-#             return int(self.finishing_feedrate_input.text())
-#         else:
-#             return "" 
+    # Function to read roughing feedrate
+    def getFinishFeed(self):
+        if self.finishing_feedrate_input.text() != "":
+            return int(self.finishing_feedrate_input.text())
+        else:
+            return "" 
     
     # Function to read roughing feedrate
     def getRoughStep(self):
         if self.roughing_stepdown_input.text() != "":
             return int(self.roughing_stepdown_input.text())
+        else:
+            return "" 
+        
+    # Function to read finishing feedrate
+    def getFinishStep(self):
+        if self.finishing_stepdown_input.text() != "":
+            return int(self.finishing_stepdown_input.text())
         else:
             return "" 
     
@@ -687,14 +744,14 @@ class DXFParserGUI(QWidget):
         elif self.getStockRadius() == "":
             self.errorMessage("You need to enter a stock radius")
         elif self.getRoughFeed() == "":
-            self.errorMessage("You need to enter a feedrate")
-#         elif self.getFinishFeed() == "":
-#             self.errorMessage("You need to enter a finishing feedrate")
+            self.errorMessage("You need to enter a roughing feedrate")
+        elif self.getFinishFeed() == "":
+            self.errorMessage("You need to enter a finishing feedrate")
         elif self.getRoughStep() == "":
             self.errorMessage("You need to enter a stepdown. 0 = 1 pass")
         else:
             entities = parse_dxf_file(self.file_path)
-            self.output_code = generate_gcode_from_dxf(entities, self.isUseM3M5Checked(), self.isStartRetractXChecked(), self.isStartRetractZChecked(), self.isStartRetractXZChecked(), self.getStockRadius(), self.getRoughFeed(), self.getRoughStep())
+            self.output_code = generate_gcode_from_dxf(entities, self.isUseM3M5Checked(), self.isStartRetractXChecked(), self.isStartRetractZChecked(), self.isStartRetractXZChecked(), self.getStockRadius(), self.getRoughFeed(), self.getRoughStep(), self.getFinishFeed(), self.getFinishStep())
             self.gcode_browser.clear()
             self.gcode_browser.append(''.join(self.output_code))
             
