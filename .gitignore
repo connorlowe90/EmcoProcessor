@@ -1,4 +1,6 @@
 # Jupyter Notebook Backups
 src/.ipynb_checkpoints/
+
+# Build files for executable
 src/build/
-src/*.spec/
+src/*.spec
